@@ -7,7 +7,7 @@ edition = "2021"
 chrono = "0.4.39"
 dotenv = "0.15.0"
 serde = "1.0.217"
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "runtime-tokio"] }
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "runtime-tokio", "time", "chrono"] }
 
 [lib]
 name="gauth"
