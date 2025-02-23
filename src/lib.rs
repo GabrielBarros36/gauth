@@ -104,8 +104,10 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[cfg_attr(feature = "test-util", tokio::test)]
+    #[serial]
     async fn test_table_creation() {
         dotenv().ok();
         let auth = Auth::new().await.unwrap();
@@ -123,7 +125,9 @@ mod tests {
         assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
     }
 
+    // Serial because it changes state of DB
     #[cfg_attr(feature = "test-util", tokio::test)]
+    #[serial]
     async fn test_user_registration() {
         dotenv().ok();
         let auth = Auth::new().await.unwrap();
@@ -163,7 +167,7 @@ mod tests {
 
         assert_eq!(exists.unwrap(), Some(false));
 
-        auth.register_user(user.clone()).await;
+        auth.register_user(user.clone()).await.unwrap();
 
         let exists = sqlx::query_scalar!(
             r#"
@@ -208,8 +212,3 @@ mod tests {
 
     }
 }
-
-
-
-
-
