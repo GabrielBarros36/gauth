@@ -56,7 +56,7 @@ impl Auth {
     }
 
     pub async fn register_user(&self, user: User /*username: &str, password: &str, email: &str*/) -> Result<User, sqlx::Error> {
-        if self.user_exists(&user.username, &user.email).await? {
+        if self.user_exists(user.clone()).await? {
             Err::<(), sqlx::Error>(sqlx::Error::RowNotFound);
         }
         // Insert user and return all fields
@@ -76,7 +76,7 @@ impl Auth {
             
     }
 
-    async fn user_exists(&self, username: &str, email: &str) -> Result<bool, sqlx::Error> {
+    async fn user_exists(&self, user: User) -> Result<bool, sqlx::Error> {
         let exists = sqlx::query_scalar!(
             r#"
             SELECT EXISTS (
@@ -84,13 +84,28 @@ impl Auth {
                 WHERE username = $1 OR email = $2
             )
             "#,
-            username,
-            email
+            user.username,
+            user.email
         )
         .fetch_one(&self.db)
         .await?;
 
         Ok(exists.unwrap_or(false))
+    }
+
+    async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM users 
+            WHERE username = $1 AND email = $2
+            "#,
+            user.username,
+            user.email
+        )
+        .execute(&self.db)
+        .await
+        .map(|_| ())
+
     }
 
 }
@@ -141,7 +156,7 @@ mod tests {
 
         };
 
-        let result = sqlx::query!(
+        sqlx::query!(
             r#"
             DELETE FROM users 
             WHERE username = $1 OR email = $2
@@ -187,12 +202,19 @@ mod tests {
     }
 
     #[cfg_attr(feature = "test-util", tokio::test)]
+    #[serial]
     async fn test_user_exists() {
         dotenv().ok();
         let auth = Auth::new().await.unwrap();
 
-        let username: &str = "test";
-        let email : &str = "test@test.com";
+        let user = User {
+            id: None,
+            username : "test".to_string(),
+            email: "test@test.com".to_string(),
+            password: "test".to_string(),
+            created_at: None,
+
+        };
 
         let result = sqlx::query_scalar!(
             r#"
@@ -201,14 +223,42 @@ mod tests {
                 WHERE username = $1 OR email = $2
             )
             "#,
-            username,
-            email
+            user.username,
+            user.email
         )
         .fetch_one(&auth.db)
         .await;
 
-        let exists = auth.user_exists(username, email).await.unwrap();
+        let exists = auth.user_exists(user.clone()).await.unwrap();
         assert_eq!(result.unwrap(), Some(exists))
+
+    }
+
+    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[serial]
+    async fn test_delete_user() {
+        dotenv().ok();
+
+        let auth = Auth::new().await.unwrap();
+
+        let user = User {
+            id: None,
+            username : "test".to_string(),
+            email: "test@test.com".to_string(),
+            password: "test".to_string(),
+            created_at: None,
+
+        };
+
+        auth.delete_user(user.clone()).await.unwrap();
+        auth.register_user(user.clone()).await.unwrap();
+        let exists = auth.user_exists(user.clone()).await.unwrap();
+        assert_eq!(exists, true);        
+
+        auth.delete_user(user.clone()).await.unwrap();
+        let exists = auth.user_exists(user.clone()).await.unwrap();
+        assert_eq!(exists, false);        
+
 
     }
 }
