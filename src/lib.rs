@@ -122,6 +122,91 @@ mod tests {
 
         assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
     }
+
+    #[cfg_attr(feature = "test-util", tokio::test)]
+    async fn test_user_registration() {
+        dotenv().ok();
+        let auth = Auth::new().await.unwrap();
+
+        let user = User {
+            id: None,
+            username : "test".to_string(),
+            email: "test@test.com".to_string(),
+            password: "test".to_string(),
+            created_at: None,
+
+        };
+
+        let result = sqlx::query!(
+            r#"
+            DELETE FROM users 
+            WHERE username = $1 OR email = $2
+            "#,
+            user.username,
+            user.email
+        )
+        .execute(&auth.db)
+        .await;
+
+        let exists = sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM users 
+                WHERE username = $1 OR email = $2
+            )
+            "#,
+            user.username,
+            user.email
+        )
+        .fetch_one(&auth.db)
+        .await;
+
+        assert_eq!(exists.unwrap(), Some(false));
+
+        auth.register_user(user.clone()).await;
+
+        let exists = sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM users 
+                WHERE username = $1 OR email = $2
+            )
+            "#,
+            user.username,
+            user.email
+        )
+        .fetch_one(&auth.db)
+        .await;
+
+        assert_eq!(exists.unwrap(), Some(true));
+
+    }
+
+    #[cfg_attr(feature = "test-util", tokio::test)]
+    async fn test_user_exists() {
+        dotenv().ok();
+        let auth = Auth::new().await.unwrap();
+
+        let username: &str = "test";
+        let email : &str = "test@test.com";
+
+        let result = sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM users 
+                WHERE username = $1 OR email = $2
+            )
+            "#,
+            username,
+            email
+        )
+        .fetch_one(&auth.db)
+        .await;
+
+        let exists = auth.user_exists(username, email).await.unwrap();
+        assert_eq!(result.unwrap(), Some(exists))
+
+    }
 }
 
 
