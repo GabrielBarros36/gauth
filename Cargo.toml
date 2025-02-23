@@ -9,6 +9,15 @@ dotenv = "0.15.0"
 serde = "1.0.217"
 sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "runtime-tokio", "time", "chrono"] }
 
+# Can be used to separate groups of tests later
+# e.g. tests that need a DB vs. not
+[features]
+test-util = [] 
+
+# The lib stays runtime-agnostic, Tokio is only needed for tests
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full", "test-util"] }
+
 [lib]
 name="gauth"
 path="src/lib.rs"

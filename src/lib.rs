@@ -5,7 +5,7 @@ use dotenv::dotenv;
 
 impl Auth {
 
-    pub async fn new_connection(&self) -> Result<Self, sqlx::Error> {
+    pub async fn new() -> Result<Self, sqlx::Error> {
         dotenv().ok();
         let db_url = std::env::var("DATABASE_URL")
             .expect("DATABASE_URL must be set");
@@ -55,8 +55,8 @@ impl Auth {
         Ok(())
     }
 
-    pub async fn register_user(&self, username: &str, password: &str, email: &str) -> Result<User, sqlx::Error> {
-        if self.user_exists(username, email).await? {
+    pub async fn register_user(&self, user: User /*username: &str, password: &str, email: &str*/) -> Result<User, sqlx::Error> {
+        if self.user_exists(&user.username, &user.email).await? {
             Err::<(), sqlx::Error>(sqlx::Error::RowNotFound);
         }
         // Insert user and return all fields
@@ -67,9 +67,9 @@ impl Auth {
             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
             RETURNING id, username, email, password, created_at
             "#,
-            username,
-            email,
-            password,
+            user.username,
+            user.email,
+            user.password,
         )
         .fetch_one(&self.db)
         .await
@@ -94,3 +94,37 @@ impl Auth {
     }
 
 }
+
+impl User {
+    pub async fn new(username: &str, email: &str, password: &str) -> User {
+        User {id: None, username: username.to_string(), email: email.to_string(), password: password.to_string(), created_at: None}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg_attr(feature = "test-util", tokio::test)]
+    async fn test_table_creation() {
+        dotenv().ok();
+        let auth = Auth::new().await.unwrap();
+
+        let result = sqlx::query!(
+            r#"
+            SELECT id, username, email, password, created_at 
+            FROM users 
+            LIMIT 0
+            "#
+        )
+        .fetch_all(&auth.db)
+        .await;
+
+        assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
+    }
+}
+
+
+
+
+
