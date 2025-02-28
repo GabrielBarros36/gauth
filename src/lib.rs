@@ -1,8 +1,10 @@
 use sqlx::{postgres::PgPoolOptions, query_scalar, query, query_as};
 mod models;
 use models::{User, Auth};
+mod jwt;
 use dotenv::dotenv;
 
+#[allow(dead_code)]
 impl Auth {
 
     pub async fn new() -> Result<Self, sqlx::Error> {
