@@ -8,6 +8,7 @@ chrono = "0.4.39"
 dotenv = "0.15.0"
 serde = "1.0.217"
 sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "runtime-tokio", "time", "chrono"] }
+jsonwebtoken = "9"
 
 # Can be used to separate groups of tests later
 # e.g. tests that need a DB vs. not
