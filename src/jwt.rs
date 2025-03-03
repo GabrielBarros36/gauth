@@ -4,7 +4,7 @@ use dotenv::dotenv;
 use crate::models::{Claims, User};
 
 // Move .env usage to main runtime later
-fn issue_token(user: User) -> String {
+pub async fn issue_token(user: User) -> String {
 	dotenv().ok();
 	let key = std::env::var("JWT_SECRET").unwrap();
 
@@ -22,9 +22,17 @@ fn issue_token(user: User) -> String {
     token
 }
 
-//DELETE LATER
-fn main() {
+// Returns true if token is valid
+// Should probably move the algorithm object to runtime later
+// Seems like as of now tokens don't expire? 
+pub async fn validate_token(user: User, token: String) -> bool {
 	dotenv().ok();
-	let key = std::env::var("JWT_SECRET");
+	let key = std::env::var("JWT_SECRET").unwrap();
 
+	let mut validation = Validation::new(Algorithm::HS256);
+
+	match decode::<Claims>(&token, &DecodingKey::from_secret(key.as_bytes()), &validation) {
+		Err(e) => false,
+		Ok(_) => true,
+	}
 }
