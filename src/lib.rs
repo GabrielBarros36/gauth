@@ -2,6 +2,7 @@ use sqlx::{postgres::PgPoolOptions, query_scalar, query, query_as};
 mod models;
 use models::{User, Auth};
 mod jwt;
+use jwt::{validate_token, issue_token};
 use dotenv::dotenv;
 
 #[allow(dead_code)]
