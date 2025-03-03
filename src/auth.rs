@@ -5,11 +5,8 @@ use dotenv::dotenv;
 #[allow(dead_code)]
 impl Auth {
 
-    pub async fn new() -> Result<Self, sqlx::Error> {
+    pub async fn new(db_url: String) -> Result<Self, sqlx::Error> {
         dotenv().ok();
-        let db_url = std::env::var("AUTH_DATABASE_URL")
-            .expect("AUTH_DATABASE_URL must be set");
-        println!("URL: {}", db_url);  // Debug print
 
         let db = PgPoolOptions::new()
             .connect(&db_url)
