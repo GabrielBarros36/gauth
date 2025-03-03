@@ -7,8 +7,8 @@ impl Auth {
 
     pub async fn new() -> Result<Self, sqlx::Error> {
         dotenv().ok();
-        let db_url = std::env::var("DATABASE_URL")
-            .expect("DATABASE_URL must be set");
+        let db_url = std::env::var("AUTH_DATABASE_URL")
+            .expect("AUTH_DATABASE_URL must be set");
         println!("URL: {}", db_url);  // Debug print
 
         let db = PgPoolOptions::new()
