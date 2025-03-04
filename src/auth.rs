@@ -6,8 +6,6 @@ use dotenv::dotenv;
 impl Auth {
 
     pub async fn new(db_url: String) -> Result<Self, sqlx::Error> {
-        dotenv().ok();
-
         let db = PgPoolOptions::new()
             .connect(&db_url)
             .await?;
