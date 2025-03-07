@@ -164,7 +164,7 @@ mod tests {
         let user = User {
             id: None,
             username : "test".to_string(),
-            email: "test@test.com".to_string(),
+            email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
 
@@ -225,7 +225,7 @@ mod tests {
         let user = User {
             id: None,
             username : "test".to_string(),
-            email: "test@test.com".to_string(),
+            email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
 
@@ -259,7 +259,7 @@ mod tests {
         let user = User {
             id: None,
             username : "test".to_string(),
-            email: "test@test.com".to_string(),
+            email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
 
@@ -288,7 +288,7 @@ mod tests {
         let user = User {
             id: None,
             username : "test".to_string(),
-            email: "test@test.com".to_string(),
+            email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
 
