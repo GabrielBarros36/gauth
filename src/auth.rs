@@ -134,7 +134,7 @@ mod tests {
     use super::*;
     use serial_test::serial;
 
-    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[cfg_attr(feature = "db-test", tokio::test)]
     #[serial]
     async fn test_table_creation() {
         dotenv().ok();
@@ -154,7 +154,7 @@ mod tests {
         assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
     }
 
-    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[cfg_attr(feature = "db-test", tokio::test)]
     #[serial]
     async fn test_user_registration() {
         dotenv().ok();
@@ -215,7 +215,7 @@ mod tests {
 
     }
 
-    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[cfg_attr(feature = "db-test", tokio::test)]
     #[serial]
     async fn test_user_exists() {
         dotenv().ok();
@@ -249,7 +249,7 @@ mod tests {
 
     }
 
-    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[cfg_attr(feature = "db-test", tokio::test)]
     #[serial]
     async fn test_delete_user() {
         dotenv().ok();
@@ -277,7 +277,7 @@ mod tests {
 
     }
 
-    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[cfg_attr(feature = "db-test", tokio::test)]
     #[serial]
     async fn test_login() {
 

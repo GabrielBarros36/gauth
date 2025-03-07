@@ -13,7 +13,7 @@ jsonwebtoken = "9"
 # Can be used to separate groups of tests later
 # e.g. tests that need a DB vs. not
 [features]
-test-util = [] 
+db-test = [] 
 jwt-tests = []
 
 # The lib stays runtime-agnostic, Tokio is only needed for tests
