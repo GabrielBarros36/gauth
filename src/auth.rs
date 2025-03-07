@@ -71,8 +71,27 @@ impl Auth {
             
     }
 
+    async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
+        let user = sqlx::query_as!(
+            User,
+            r#"
+            SELECT * FROM users 
+            WHERE (username = $1 AND password = $3) OR (email = $2 AND password = $3)
+            "#,
+            user.username,
+            user.email,
+            user.password
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        Ok(user)
+
+    }
+
+
     async fn user_exists(&self, user: User) -> Result<bool, sqlx::Error> {
-        let exists = sqlx::query_scalar!(
+        let result = sqlx::query_scalar!(
             r#"
             SELECT EXISTS (
                 SELECT 1 FROM users 
@@ -85,7 +104,8 @@ impl Auth {
         .fetch_one(&self.db)
         .await?;
 
-        Ok(exists.unwrap_or(false))
+        Ok(result.unwrap_or(false))
+
     }
 
     async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
@@ -120,7 +140,8 @@ mod tests {
     #[serial]
     async fn test_table_creation() {
         dotenv().ok();
-        let auth = Auth::new().await.unwrap();
+        let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
+        let auth = Auth::new(db_url).await.unwrap();
 
         let result = sqlx::query!(
             r#"
@@ -140,7 +161,8 @@ mod tests {
     #[serial]
     async fn test_user_registration() {
         dotenv().ok();
-        let auth = Auth::new().await.unwrap();
+        let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
+        let auth = Auth::new(db_url).await.unwrap();
 
         let user = User {
             id: None,
@@ -200,7 +222,8 @@ mod tests {
     #[serial]
     async fn test_user_exists() {
         dotenv().ok();
-        let auth = Auth::new().await.unwrap();
+        let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
+        let auth = Auth::new(db_url).await.unwrap();
 
         let user = User {
             id: None,
@@ -233,8 +256,8 @@ mod tests {
     #[serial]
     async fn test_delete_user() {
         dotenv().ok();
-
-        let auth = Auth::new().await.unwrap();
+        let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
+        let auth = Auth::new(db_url).await.unwrap();
 
         let user = User {
             id: None,
@@ -255,5 +278,38 @@ mod tests {
         assert_eq!(exists, false);        
 
 
+    }
+
+    #[cfg_attr(feature = "test-util", tokio::test)]
+    #[serial]
+    async fn test_login() {
+
+        dotenv().ok();
+        let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
+        let auth = Auth::new(db_url).await.unwrap();
+
+        let user = User {
+            id: None,
+            username : "test".to_string(),
+            email: "test@test.com".to_string(),
+            password: "test".to_string(),
+            created_at: None,
+
+        };
+
+        auth.delete_user(user.clone()).await;
+        let result = match auth.user_login(user.clone()).await {
+            Ok(val) => val,
+            Err(e) => panic!("DB error: {}", e),
+        };
+        assert!(result.is_none());
+        
+        auth.register_user(user.clone()).await;
+        let result = match auth.user_login(user.clone()).await {
+            Ok(val) => val,
+            Err(e) => panic!("DB error: {}", e),
+        };
+        assert!(!(result.is_none()));
+        
     }
 }
