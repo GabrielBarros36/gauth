@@ -1,12 +1,8 @@
-use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, decode, Header, Algorithm, Validation, EncodingKey, DecodingKey};
-use dotenv::dotenv;
 use crate::models::{Claims, User};
 
 // Move .env usage to main runtime later
-pub async fn issue_token(user: &User) -> String {
-	dotenv().ok();
-	let key = std::env::var("JWT_SECRET").unwrap();
+pub async fn issue_token(user: &User, key: String) -> String {
 
 	let claim = Claims {
 		sub: user.username.clone(),
@@ -25,10 +21,7 @@ pub async fn issue_token(user: &User) -> String {
 // Should probably do away w/ this
 // Returns true if token is valid
 // Should probably move the algorithm object to runtime later
-pub async fn validate_token(token: &String) -> bool {
-	dotenv().ok();
-	let key = std::env::var("JWT_SECRET").unwrap();
-
+pub async fn validate_token(token: &String, key: String) -> bool {
 	let mut validation = Validation::new(Algorithm::HS256);
 
 	match decode::<Claims>(&token, &DecodingKey::from_secret(key.as_bytes()), &validation) {
@@ -54,9 +47,9 @@ mod tests {
             created_at: None,
 
         };
-
-        let token : String = issue_token(&user).await;
-        let validation: bool = validate_token(&token).await;
+		let key = String::from("test");
+        let token : String = issue_token(&user, key.clone()).await;
+        let validation: bool = validate_token(&token, key).await;
         dbg!(validation);
         assert_eq!(validation, true);
 
