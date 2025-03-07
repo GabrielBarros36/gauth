@@ -42,7 +42,8 @@ mod tests {
 	use super::*;
 
 
-	#[cfg_attr(feature = "jwt-tests", tokio::test)]
+	#[cfg(feature = "jwt-test")]
+    #[tokio::test]
 	async fn issue_and_validate() {
 
 		let user = User {

@@ -14,7 +14,7 @@ jsonwebtoken = "9"
 # e.g. tests that need a DB vs. not
 [features]
 db-test = [] 
-jwt-tests = []
+jwt-test = []
 
 # The lib stays runtime-agnostic, Tokio is only needed for tests
 [dev-dependencies]
