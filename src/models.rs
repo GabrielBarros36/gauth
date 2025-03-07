@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 pub struct User {
     pub id: Option<i32>,
     pub username: String,
-    pub email: String,
+    pub email: Option<String>,
     pub password: String,
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
 }

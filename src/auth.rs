@@ -31,7 +31,6 @@ impl Auth {
         .unwrap_or(false);
 
         if !table_exists {
-            // Create users table
             query!(
                 r#"
                 CREATE TABLE users (
@@ -54,9 +53,8 @@ impl Auth {
         if self.user_exists(user.clone()).await? {
             Err::<(), sqlx::Error>(sqlx::Error::RowNotFound);
         }
-        // Insert user and return all fields
         query_as!(
-            User,  // This will return the created user
+            User, 
             r#"
             INSERT INTO users (username, email, password, created_at)
             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
@@ -71,7 +69,7 @@ impl Auth {
             
     }
 
-    async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
+   pub async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as!(
             User,
             r#"
@@ -90,6 +88,22 @@ impl Auth {
     }
 
 
+    
+    pub async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM users 
+            WHERE username = $1 AND email = $2
+            "#,
+            user.username,
+            user.email
+        )
+        .execute(&self.db)
+        .await
+        .map(|_| ())
+        
+    }
+    
     async fn user_exists(&self, user: User) -> Result<bool, sqlx::Error> {
         let result = sqlx::query_scalar!(
             r#"
@@ -107,27 +121,11 @@ impl Auth {
         Ok(result.unwrap_or(false))
 
     }
-
-    async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            r#"
-            DELETE FROM users 
-            WHERE username = $1 AND email = $2
-            "#,
-            user.username,
-            user.email
-        )
-        .execute(&self.db)
-        .await
-        .map(|_| ())
-
-    }
-
 }
 
 impl User {
     pub async fn new(username: &str, email: &str, password: &str) -> User {
-        User {id: None, username: username.to_string(), email: email.to_string(), password: password.to_string(), created_at: None}
+        User {id: None, username: username.to_string(), email: Some(email.to_string()), password: password.to_string(), created_at: None}
     }
 }
 
@@ -156,7 +154,6 @@ mod tests {
         assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
     }
 
-    // Serial because it changes state of DB
     #[cfg_attr(feature = "test-util", tokio::test)]
     #[serial]
     async fn test_user_registration() {
