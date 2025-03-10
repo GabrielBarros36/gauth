@@ -1,5 +1,5 @@
 use crate::models::{Claims, User};
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation, errors};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, errors};
 
 // Move .env usage to main runtime later
 pub async fn issue_token(user: &User, key: String) -> String {
@@ -41,17 +41,18 @@ mod tests {
     #[cfg(feature = "jwt-test")]
     #[tokio::test]
     async fn issue_and_validate() {
+        use jsonwebtoken::TokenData;
+
         let user = User {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
-            password: "test".to_string(),
+            password: "testing".to_string(),
             created_at: None,
         };
         let key = String::from("test");
         let token: String = issue_token(&user, key.clone()).await;
-        let validation: bool = validate_token(&token, key).await;
-        dbg!(validation);
-        assert_eq!(validation, true);
+        let validation = validate_token(&token, key).await.unwrap();
+        assert_eq!(validation.sub, user.username);
     }
 }
