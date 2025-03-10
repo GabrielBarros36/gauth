@@ -16,7 +16,7 @@ pub struct Auth {
     pub db: sqlx::PgPool
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: String,         // Username
     pub exp: usize,          // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
