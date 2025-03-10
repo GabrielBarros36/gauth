@@ -1,6 +1,5 @@
 use sqlx::{postgres::PgPoolOptions, query_scalar, query, query_as};
 use crate::models::{User, Auth};
-use dotenv::dotenv;
 
 #[allow(dead_code)]
 impl Auth {
@@ -51,7 +50,7 @@ impl Auth {
 
     pub async fn register_user(&self, user: User /*username: &str, password: &str, email: &str*/) -> Result<User, sqlx::Error> {
         if self.user_exists(user.clone()).await? {
-            Err::<(), sqlx::Error>(sqlx::Error::RowNotFound);
+            return Err(sqlx::Error::RowNotFound);
         }
         query_as!(
             User, 
