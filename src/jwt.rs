@@ -1,5 +1,5 @@
 use crate::models::{Claims, User};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, errors};
+use jsonwebtoken::{decode, encode, errors, DecodingKey, EncodingKey, Header, Validation};
 
 // Move .env usage to main runtime later
 pub async fn issue_token(user: &User, key: String) -> String {
@@ -26,12 +26,11 @@ pub async fn issue_token(user: &User, key: String) -> String {
 // Should probably move the algorithm object to runtime later
 pub async fn validate_token(token: &str, key: String) -> Result<Claims, errors::Error> {
     let data = decode::<Claims>(
-        token, 
+        token,
         &DecodingKey::from_secret(key.as_bytes()),
         &Validation::default(),
     )?;
     Ok(data.claims)
-
 }
 
 #[cfg(test)]

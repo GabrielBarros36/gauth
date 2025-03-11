@@ -1,6 +1,6 @@
-pub use crate::models::{User, Auth, Claims};
 pub use crate::jwt::{issue_token, validate_token};
+pub use crate::models::{Auth, Claims, User};
 
-pub mod models;
-pub mod jwt;
 mod auth;
+pub mod jwt;
+pub mod models;
