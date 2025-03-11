@@ -1,15 +1,12 @@
-use sqlx::{postgres::PgPoolOptions, query_scalar, query, query_as};
-use crate::models::{User, Auth};
+use crate::models::{Auth, User};
+use sqlx::{postgres::PgPoolOptions, query, query_as, query_scalar};
 
 #[allow(dead_code)]
 impl Auth {
-
     pub async fn new(db_url: String) -> Result<Self, sqlx::Error> {
-        let db = PgPoolOptions::new()
-            .connect(&db_url)
-            .await?;
+        let db = PgPoolOptions::new().connect(&db_url).await?;
 
-        let auth = Self {db};
+        let auth = Self { db };
         auth.setup().await?;
 
         Ok(auth)
@@ -48,12 +45,15 @@ impl Auth {
         Ok(())
     }
 
-    pub async fn register_user(&self, user: User /*username: &str, password: &str, email: &str*/) -> Result<User, sqlx::Error> {
+    pub async fn register_user(
+        &self,
+        user: User, /*username: &str, password: &str, email: &str*/
+    ) -> Result<User, sqlx::Error> {
         if self.user_exists(user.clone()).await? {
             return Err(sqlx::Error::RowNotFound);
         }
         query_as!(
-            User, 
+            User,
             r#"
             INSERT INTO users (username, email, password, created_at)
             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
@@ -65,10 +65,9 @@ impl Auth {
         )
         .fetch_one(&self.db)
         .await
-            
     }
 
-   pub async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
+    pub async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as!(
             User,
             r#"
@@ -83,11 +82,8 @@ impl Auth {
         .await?;
 
         Ok(user)
-
     }
 
-
-    
     pub async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
@@ -100,9 +96,8 @@ impl Auth {
         .execute(&self.db)
         .await
         .map(|_| ())
-        
     }
-    
+
     async fn user_exists(&self, user: User) -> Result<bool, sqlx::Error> {
         let result = sqlx::query_scalar!(
             r#"
@@ -118,19 +113,44 @@ impl Auth {
         .await?;
 
         Ok(result.unwrap_or(false))
+    }
 
+    pub async fn get_user_by_id(&self, id: i32) -> Result<Option<User>, sqlx::Error> {
+        let result = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
+            .fetch_optional(&self.db)
+            .await?;
+
+        Ok(result)
+    }
+
+    pub async fn get_user_by_username(
+        &self,
+        username: String,
+    ) -> Result<Option<User>, sqlx::Error> {
+        let result = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
+            .fetch_optional(&self.db)
+            .await?;
+
+        Ok(result)
     }
 }
 
 impl User {
     pub async fn new(username: &str, email: &str, password: &str) -> User {
-        User {id: None, username: username.to_string(), email: Some(email.to_string()), password: password.to_string(), created_at: None}
+        User {
+            id: None,
+            username: username.to_string(),
+            email: Some(email.to_string()),
+            password: password.to_string(),
+            created_at: None,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenv::dotenv;
     use serial_test::serial;
 
     #[cfg(feature = "db-test")]
@@ -151,7 +171,10 @@ mod tests {
         .fetch_all(&auth.db)
         .await;
 
-        assert!(result.is_ok(), "Users table doesn't exist or has wrong structure");
+        assert!(
+            result.is_ok(),
+            "Users table doesn't exist or has wrong structure"
+        );
     }
 
     #[cfg(feature = "db-test")]
@@ -164,11 +187,10 @@ mod tests {
 
         let user = User {
             id: None,
-            username : "test".to_string(),
+            username: "test".to_string(),
             email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
-
         };
 
         sqlx::query!(
@@ -213,7 +235,6 @@ mod tests {
         .await;
 
         assert_eq!(exists.unwrap(), Some(true));
-
     }
 
     #[cfg(feature = "db-test")]
@@ -226,11 +247,10 @@ mod tests {
 
         let user = User {
             id: None,
-            username : "test".to_string(),
+            username: "test".to_string(),
             email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
-
         };
 
         let result = sqlx::query_scalar!(
@@ -248,7 +268,6 @@ mod tests {
 
         let exists = auth.user_exists(user.clone()).await.unwrap();
         assert_eq!(result.unwrap(), Some(exists))
-
     }
 
     #[cfg(feature = "db-test")]
@@ -261,41 +280,36 @@ mod tests {
 
         let user = User {
             id: None,
-            username : "test".to_string(),
+            username: "test".to_string(),
             email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
-
         };
 
         auth.delete_user(user.clone()).await.unwrap();
         auth.register_user(user.clone()).await.unwrap();
         let exists = auth.user_exists(user.clone()).await.unwrap();
-        assert_eq!(exists, true);        
+        assert_eq!(exists, true);
 
         auth.delete_user(user.clone()).await.unwrap();
         let exists = auth.user_exists(user.clone()).await.unwrap();
-        assert_eq!(exists, false);        
-
-
+        assert_eq!(exists, false);
     }
 
     #[cfg(feature = "db-test")]
     #[tokio::test]
     #[serial]
     async fn test_login() {
-
         dotenv().ok();
         let db_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
         let auth = Auth::new(db_url).await.unwrap();
 
         let user = User {
             id: None,
-            username : "test".to_string(),
+            username: "test".to_string(),
             email: Some("test@test.com".to_string()),
             password: "test".to_string(),
             created_at: None,
-
         };
 
         auth.delete_user(user.clone()).await;
@@ -304,13 +318,12 @@ mod tests {
             Err(e) => panic!("DB error: {}", e),
         };
         assert!(result.is_none());
-        
+
         auth.register_user(user.clone()).await;
         let result = match auth.user_login(user.clone()).await {
             Ok(val) => val,
             Err(e) => panic!("DB error: {}", e),
         };
         assert!(!(result.is_none()));
-        
     }
 }
