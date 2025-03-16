@@ -1,4 +1,8 @@
 use crate::models::{Auth, User};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use sqlx::{postgres::PgPoolOptions, query, query_as, query_scalar};
 
 #[allow(dead_code)]
@@ -52,6 +56,13 @@ impl Auth {
         if self.user_exists(user.clone()).await? {
             return Err(sqlx::Error::RowNotFound);
         }
+
+        let password = user.password.clone();
+        let password = password.as_bytes();
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        let password_hash = argon2.hash_password(password, &salt).unwrap().to_string();
+
         query_as!(
             User,
             r#"
@@ -61,27 +72,47 @@ impl Auth {
             "#,
             user.username,
             user.email,
-            user.password,
+            password_hash,
         )
         .fetch_one(&self.db)
         .await
     }
 
     pub async fn user_login(&self, user: User) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(
+        let password = user.password.clone();
+        let argon2 = Argon2::default();
+
+        let stored_user = sqlx::query_as!(
             User,
             r#"
             SELECT * FROM users 
-            WHERE (username = $1 AND password = $3) OR (email = $2 AND password = $3)
+            WHERE username = $1 OR email = $2
             "#,
             user.username,
             user.email,
-            user.password
         )
         .fetch_optional(&self.db)
         .await?;
 
-        Ok(user)
+        if let Some(stored_user) = stored_user {
+            // Now verify the password
+            let provided_password = user.password.as_bytes();
+
+            // Parse the stored hash
+            match PasswordHash::new(&stored_user.password) {
+                Ok(parsed_hash) => {
+                    // Verify the password against the stored hash
+                    let argon2 = Argon2::default();
+                    match argon2.verify_password(provided_password, &parsed_hash) {
+                        Ok(_) => Ok(Some(stored_user)), // Password verified successfully
+                        Err(_) => Ok(None),             // Password incorrect
+                    }
+                }
+                Err(_) => Ok(None), // Invalid hash format in database
+            }
+        } else {
+            Ok(None) // User not found
+        }
     }
 
     pub async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
