@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    ALTER TABLE users\n                    ADD COLUMN profile_picture VARCHAR(255)\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "8ad07f2e11f3266d84f39b5d44a683377bf953796a9aaa2d992a6ee68523fcb9"
+}

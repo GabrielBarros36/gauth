@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM users WHERE id = $1",
+  "query": "\n            INSERT INTO users (username, email, profile_picture, password, created_at)\n            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)\n            RETURNING id, username, email, profile_picture, password, created_at\n            ",
   "describe": {
     "columns": [
       {
@@ -20,27 +20,36 @@
       },
       {
         "ordinal": 3,
-        "name": "password",
+        "name": "profile_picture",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
+        "name": "password",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
       ]
     },
     "nullable": [
       false,
       false,
       false,
+      true,
       false,
       false
     ]
   },
-  "hash": "843923b9a0257cf80f1dff554e7dc8fdfc05f489328e8376513124dfb42996e3"
+  "hash": "4dc825a19f52bf4c39a5bccd8cde19d0cdc373e5fc488f33149f4a87d84b9793"
 }

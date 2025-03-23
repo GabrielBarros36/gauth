@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM users WHERE username = $1",
+  "query": "SELECT id, username, email, profile_picture, password, created_at FROM users WHERE username = $1",
   "describe": {
     "columns": [
       {
@@ -20,11 +20,16 @@
       },
       {
         "ordinal": 3,
-        "name": "password",
+        "name": "profile_picture",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
+        "name": "password",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -38,9 +43,10 @@
       false,
       false,
       false,
+      true,
       false,
       false
     ]
   },
-  "hash": "606364c79e0990deb07dfbe6c32b3d302d083ec5333f3a5ce04113c38a041100"
+  "hash": "19f7ca2b8285cf2e57593ad307e84f4a74f0a3893a3a560a1a99b5ebff5ece3c"
 }

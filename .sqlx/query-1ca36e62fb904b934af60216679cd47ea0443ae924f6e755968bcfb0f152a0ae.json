@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT EXISTS (\n                    SELECT 1 \n                    FROM information_schema.columns \n                    WHERE table_name = 'users' AND column_name = 'profile_picture'\n                )\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1ca36e62fb904b934af60216679cd47ea0443ae924f6e755968bcfb0f152a0ae"
+}

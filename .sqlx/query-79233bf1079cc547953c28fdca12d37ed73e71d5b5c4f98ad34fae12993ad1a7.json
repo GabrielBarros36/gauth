@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                CREATE TABLE users (\n                    id SERIAL PRIMARY KEY,\n                    username VARCHAR(50) NOT NULL UNIQUE,\n                    email VARCHAR(255) NOT NULL UNIQUE,\n                    profile_picture VARCHAR(255),\n                    password VARCHAR(255) NOT NULL,\n                    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP\n                )\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "79233bf1079cc547953c28fdca12d37ed73e71d5b5c4f98ad34fae12993ad1a7"
+}
