@@ -46,6 +46,7 @@ mod tests {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
+            profile_picture: None,
             password: "testing".to_string(),
             created_at: None,
         };

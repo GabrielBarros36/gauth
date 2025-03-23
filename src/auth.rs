@@ -37,6 +37,7 @@ impl Auth {
                     id SERIAL PRIMARY KEY,
                     username VARCHAR(50) NOT NULL UNIQUE,
                     email VARCHAR(255) NOT NULL UNIQUE,
+                    profile_picture VARCHAR(255),
                     password VARCHAR(255) NOT NULL,
                     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
@@ -44,6 +45,32 @@ impl Auth {
             )
             .execute(&self.db)
             .await?;
+        } else {
+            // Check if profile_picture column exists
+            let column_exists = query_scalar!(
+                r#"
+                SELECT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'users' AND column_name = 'profile_picture'
+                )
+                "#
+            )
+            .fetch_one(&self.db)
+            .await?
+            .unwrap_or(false);
+
+            // Add profile_picture column if it doesn't exist
+            if !column_exists {
+                query!(
+                    r#"
+                    ALTER TABLE users
+                    ADD COLUMN profile_picture VARCHAR(255)
+                    "#
+                )
+                .execute(&self.db)
+                .await?;
+            }
         }
 
         Ok(())
@@ -66,12 +93,13 @@ impl Auth {
         query_as!(
             User,
             r#"
-            INSERT INTO users (username, email, password, created_at)
-            VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-            RETURNING id, username, email, password, created_at
+            INSERT INTO users (username, email, profile_picture, password, created_at)
+            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+            RETURNING id, username, email, profile_picture, password, created_at
             "#,
             user.username,
             user.email,
+            user.profile_picture,
             password_hash,
         )
         .fetch_one(&self.db)
@@ -85,7 +113,8 @@ impl Auth {
         let stored_user = sqlx::query_as!(
             User,
             r#"
-            SELECT * FROM users 
+            SELECT id, username, email, profile_picture, password, created_at
+            FROM users 
             WHERE username = $1 OR email = $2
             "#,
             user.username,
@@ -147,7 +176,7 @@ impl Auth {
     }
 
     pub async fn get_user_by_id(&self, id: i32) -> Result<Option<User>, sqlx::Error> {
-        let result = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
+        let result = sqlx::query_as!(User, "SELECT id, username, email, profile_picture, password, created_at FROM users WHERE id = $1", id)
             .fetch_optional(&self.db)
             .await?;
 
@@ -158,7 +187,7 @@ impl Auth {
         &self,
         username: String,
     ) -> Result<Option<User>, sqlx::Error> {
-        let result = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
+        let result = sqlx::query_as!(User, "SELECT id, username, email, profile_picture, password, created_at FROM users WHERE username = $1", username)
             .fetch_optional(&self.db)
             .await?;
 
@@ -172,6 +201,7 @@ impl User {
             id: None,
             username: username.to_string(),
             email: Some(email.to_string()),
+            profile_picture: None,
             password: password.to_string(),
             created_at: None,
         }
@@ -220,6 +250,7 @@ mod tests {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
+            profile_picture: None,
             password: "test".to_string(),
             created_at: None,
         };
@@ -280,6 +311,7 @@ mod tests {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
+            profile_picture: None,
             password: "test".to_string(),
             created_at: None,
         };
@@ -313,6 +345,7 @@ mod tests {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
+            profile_picture: None,
             password: "test".to_string(),
             created_at: None,
         };
@@ -339,6 +372,7 @@ mod tests {
             id: None,
             username: "test".to_string(),
             email: Some("test@test.com".to_string()),
+            profile_picture: None,
             password: "test".to_string(),
             created_at: None,
         };
