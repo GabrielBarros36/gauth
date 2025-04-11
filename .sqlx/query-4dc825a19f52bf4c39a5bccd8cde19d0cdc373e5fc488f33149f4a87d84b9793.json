@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "profile_picture",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
@@ -38,7 +38,7 @@
       "Left": [
         "Varchar",
         "Varchar",
-        "Varchar",
+        "Text",
         "Varchar"
       ]
     },
